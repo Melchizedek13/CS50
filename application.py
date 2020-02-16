@@ -115,8 +115,16 @@ def logout():
 @login_required
 def quote():
     """Get stock quote."""
-
-    return apology("TODO")
+    if request.method == 'GET':
+        return render_template("quote.html", method='GET')
+    else:
+        # Ensure symbol was submitted
+        if not request.form.get("symbol"):
+            return apology("must provide symbol", 403)
+        shares_data = lookup(request.form.get("symbol"))
+        if not shares_data:
+            return apology("invalid symbol", 400)
+        return render_template("quote.html", method="POST", shares_data=f"{shares_data['name']} ({shares_data['symbol']}) costs ${shares_data['price']}")
 
 
 @app.route("/register", methods=["GET", "POST"])
@@ -125,7 +133,8 @@ def register():
     if request.method == 'POST':
         db.execute("insert into users(username, hash) values(?, ?)",
                    request.form.get("username"),
-                   generate_password_hash(password=request.form.get("password"), method='pbkdf2:sha512', salt_length=14))
+                   generate_password_hash(password=request.form.get("password"), method='pbkdf2:sha512',
+                                          salt_length=14))
 
         # Remember which user has logged in
         session["user_id"] = request.form.get("username")
