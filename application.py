@@ -122,10 +122,13 @@ def quote():
 def register():
     """Register user"""
     if request.method == 'POST':
-        # Ensure username was specified
-        if not request.form.get("username"):
-            return apology("must provide username", 403)
+        db.execute("insert into users(username, hash) values(?, ?)",
+                   request.form.get("username"),
+                   generate_password_hash(password=request.form.get("password"), method='pbkdf2:sha512', salt_length=14))
 
+        # Remember which user has logged in
+        session["user_id"] = request.form.get("username")
+        flash("Registered!")
         # Redirect user to home page
         return redirect("/")
 
