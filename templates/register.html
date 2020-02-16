@@ -20,7 +20,11 @@
     <script>
         function validateRegisterForm() {
             if (document.getElementById('username').value === '' || document.getElementById('username').value.length < 5) {
-                alert('The username must be filled in at least five characters!');
+                alert('The username field must contain at least five characters!');
+            } else if (document.getElementById('password').value === '' || document.getElementById('confirmation').value === '') {
+                alert('The password & confirmation fields must be filled!');
+            } else if (document.getElementById('password').value !== document.getElementById('confirmation').value) {
+                alert('The passwords must be the same in password & confirmations fields');
             } else {
                 return true;
             }
