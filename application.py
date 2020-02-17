@@ -87,22 +87,23 @@ def buy():
             with con:
                 con.execute("update users set cash = cash - ? where id = ?", (total_price, session["user_id"]))
                 con.execute("insert into transactions (user_id, name, symbol, shares, price) values (?, ?, ?, ?, ?)",
-                            (session["user_id"], share_data["name"], request.form.get("symbol"),
+                            (session["user_id"], share_data["name"], share_data["symbol"],
                              request.form.get("shares"), price_per_share))
                 flash("Bought")
         except sqlite3.Error as e:
             print('Transaction failed.', e)
         
         con.close()
-        return redirect("index.hmtl")
+        return redirect("/")
         
-
 
 @app.route("/history")
 @login_required
 def history():
     """Show history of transactions"""
-    return apology("TODO")
+    transactions = db.execute("select symbol, shares, price, trans_date from transactions where user_id = :user_id order by trans_date desc",
+                              user_id=session["user_id"])
+    return render_template("history.html", transactions=transactions)
 
 
 @app.route("/login", methods=["GET", "POST"])
