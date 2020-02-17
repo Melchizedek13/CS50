@@ -10,6 +10,8 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from helpers import apology, login_required, lookup, usd
 
+
+# Specification https://cs50.harvard.edu/x/2020/tracks/web/finance/
 # Configure application
 app = Flask(__name__)
 
@@ -39,6 +41,7 @@ Session(app)
 db = SQL("sqlite:///finance.db", connect_args={'check_same_thread': False})
 
 # Make sure API key is set
+# Should get token there https://iexcloud.io/cloud-login#/
 if not os.environ.get("API_KEY"):
     raise RuntimeError("API_KEY not set")
 
