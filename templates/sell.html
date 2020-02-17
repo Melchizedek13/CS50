@@ -5,13 +5,14 @@ Sell
 {% endblock %}
 
 {% block main %}
-
     <form action="/sell" method="post">
         <div class="form-group">
             <select class="form-control" name="symbol">
-                <option disabled="" selected="" value="">Symbol</option>
-                    <option value="A">A</option>
-                    <option value="D">D</option>
+                <option disabled selected value>Symbol</option>
+
+                {% for x in sell_data %}
+                    <option value="{{ x['symbol'] }}">{{ x['symbol'] }}</option>
+                {% endfor %}
             </select>
         </div>
         <div class="form-group">

@@ -70,7 +70,8 @@ def buy():
             return apology("missing shares", 400)
 
         # user account balance
-        user_cash_remaining = db.execute("SELECT cash FROM users WHERE id = :user_id", user_id=session["user_id"])[0]['cash']
+        user_cash_remaining = db.execute("SELECT cash FROM users WHERE id = :user_id", user_id=session["user_id"])[0][
+            'cash']
 
         # get share price
         share_data = lookup(request.form.get("symbol"))
@@ -92,17 +93,18 @@ def buy():
                 flash("Bought")
         except sqlite3.Error as e:
             print('Transaction failed.', e)
-        
+
         con.close()
         return redirect("/")
-        
+
 
 @app.route("/history")
 @login_required
 def history():
     """Show history of transactions"""
-    transactions = db.execute("select symbol, shares, price, trans_date from transactions where user_id = :user_id order by trans_date desc",
-                              user_id=session["user_id"])
+    transactions = db.execute(
+        "select symbol, shares, price, trans_date from transactions where user_id = :user_id order by trans_date desc",
+        user_id=session["user_id"])
     return render_template("history.html", transactions=transactions)
 
 
@@ -167,7 +169,8 @@ def quote():
         shares_data = lookup(request.form.get("symbol"))
         if not shares_data:
             return apology("invalid symbol", 400)
-        return render_template("quote.html", shares_data=f"{shares_data['name']} ({shares_data['symbol']}) costs ${shares_data['price']}")
+        return render_template("quote.html",
+                               shares_data=f"{shares_data['name']} ({shares_data['symbol']}) costs ${shares_data['price']}")
 
 
 @app.route("/register", methods=["GET", "POST"])
@@ -193,10 +196,42 @@ def register():
 @login_required
 def sell():
     """Sell shares of stock"""
+    sell_data = db.execute(
+        "select symbol, sum(shares) shares from transactions where user_id = :user_id group by symbol",
+        user_id=session["user_id"])
+
     if request.method == 'GET':
-        return render_template("sell.html")
+        return render_template("sell.html", sell_data=sell_data)
     else:
-        return apology("TODO")
+        share_data = lookup(request.form.get("symbol"))
+        if not request.form.get("symbol"):
+            return apology("MISSING SYMBOL", 400)
+
+        if request.form.get("shares") == "":
+            return apology("MISSING SHARES", 400)
+
+        # Check if the user have enough shares
+        if len(sell_data) != 0 and int(request.form.get("shares")) > next(
+                x['shares'] for x in sell_data if x['symbol'] == request.form.get("symbol")):
+            return apology("TOO MANY SHARES", 400)
+
+        price_per_share = share_data["price"]
+        # Calculate the price of requested shares
+        total_price = price_per_share * int(request.form.get("shares"))
+
+        con = sqlite3.connect('finance.db')
+        try:
+            with con:
+                con.execute("update users set cash = cash + ? where id = ?", (total_price, session["user_id"]))
+                con.execute("insert into transactions (user_id, name, symbol, shares, price) values (?, ?, ?, ?, ?)",
+                            (session["user_id"], share_data["name"], share_data["symbol"],
+                             '-' + request.form.get("shares"), price_per_share))
+                flash("Sold")
+        except sqlite3.Error as e:
+            print('Transaction failed.', e)
+
+        con.close()
+        return redirect("/")
 
 
 def errorhandler(e):
