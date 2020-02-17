@@ -47,7 +47,14 @@ if not os.environ.get("API_KEY"):
 @login_required
 def index():
     """Show portfolio of stocks"""
-    return apology("TODO")
+    stocks = db.execute("""
+        select symbol, name, sum(shares) shares, min(price) price,
+               sum(shares) * min(price) total
+          from transactions
+         where user_id = :user_id
+         group by symbol, name""", user_id=session["user_id"])
+    balance_account = db.execute("SELECT cash FROM users WHERE id = :user_id", user_id=session["user_id"])[0]["cash"]
+    return render_template("index.html", stocks=stocks, balance_account=balance_account)
 
 
 @app.route("/buy", methods=["GET", "POST"])
@@ -79,11 +86,12 @@ def buy():
         try:
             with con:
                 con.execute("update users set cash = cash - ? where id = ?", (total_price, session["user_id"]))
-                con.execute("insert into transactions (user_id, symbol, shares, price) values (?, ?, ?, ?)",
-                            (session["user_id"], request.form.get("symbol"), request.form.get("shares"), price_per_share))
+                con.execute("insert into transactions (user_id, name, symbol, shares, price) values (?, ?, ?, ?, ?)",
+                            (session["user_id"], share_data["name"], request.form.get("symbol"),
+                             request.form.get("shares"), price_per_share))
                 flash("Bought")
         except sqlite3.Error as e:
-            print('transaction failed', e)
+            print('Transaction failed.', e)
         
         con.close()
         return redirect("index.hmtl")
@@ -165,13 +173,13 @@ def quote():
 def register():
     """Register user"""
     if request.method == 'POST':
-        db.execute("insert into users(username, hash) values(?, ?)",
-                   request.form.get("username"),
-                   generate_password_hash(password=request.form.get("password"), method='pbkdf2:sha512',
-                                          salt_length=14))
+        new_user_id = db.execute("insert into users(username, hash) values(?, ?)",
+                                 request.form.get("username"),
+                                 generate_password_hash(password=request.form.get("password"), method='pbkdf2:sha512',
+                                                        salt_length=14))
 
         # Remember which user has logged in
-        session["user_id"] = request.form.get("username")
+        session["user_id"] = new_user_id
         flash("Registered!")
         # Redirect user to home page
         return redirect("/")
