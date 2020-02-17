@@ -1,4 +1,5 @@
 import os
+import sqlite3
 
 from cs50 import SQL
 from flask import Flask, flash, jsonify, redirect, render_template, request, session
@@ -53,7 +54,40 @@ def index():
 @login_required
 def buy():
     """Buy shares of stock"""
-    return apology("TODO")
+    if request.method == 'GET':
+        return render_template("buy.html")
+    else:
+        if not request.form.get("symbol"):
+            return apology("missing symbols", 400)
+        if not request.form.get("shares"):
+            return apology("missing shares", 400)
+
+        # user account balance
+        user_cash_remaining = db.execute("SELECT cash FROM users WHERE id = :user_id", user_id=session["user_id"])[0]['cash']
+
+        # get share price
+        share_data = lookup(request.form.get("symbol"))
+        price_per_share = share_data["price"]
+
+        # Calculate the price of requested shares
+        total_price = price_per_share * int(request.form.get("shares"))
+
+        if total_price > user_cash_remaining:
+            return apology("CAN'T AFFORD", 400);
+
+        con = sqlite3.connect('finance.db')
+        try:
+            with con:
+                con.execute("update users set cash = cash - ? where id = ?", (total_price, session["user_id"]))
+                con.execute("insert into transactions (user_id, symbol, shares, price) values (?, ?, ?, ?)",
+                            (session["user_id"], request.form.get("symbol"), request.form.get("shares"), price_per_share))
+                flash("Bought")
+        except sqlite3.Error as e:
+            print('transaction failed', e)
+        
+        con.close()
+        return redirect("index.hmtl")
+        
 
 
 @app.route("/history")
@@ -116,7 +150,7 @@ def logout():
 def quote():
     """Get stock quote."""
     if request.method == 'GET':
-        return render_template("quote.html", method='GET')
+        return render_template("quote.html")
     else:
         # Ensure symbol was submitted
         if not request.form.get("symbol"):
@@ -124,7 +158,7 @@ def quote():
         shares_data = lookup(request.form.get("symbol"))
         if not shares_data:
             return apology("invalid symbol", 400)
-        return render_template("quote.html", method="POST", shares_data=f"{shares_data['name']} ({shares_data['symbol']}) costs ${shares_data['price']}")
+        return render_template("quote.html", shares_data=f"{shares_data['name']} ({shares_data['symbol']}) costs ${shares_data['price']}")
 
 
 @app.route("/register", methods=["GET", "POST"])
