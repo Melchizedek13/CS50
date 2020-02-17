@@ -1,11 +1,11 @@
 {% extends "layout.html" %}
 
 {% block title %}
-    C$50 Finance: Quote
+    Quote
 {% endblock %}
 
 {% block main %}
-    {% if method == 'GET' %}
+    {% if not shares_data %}
         <form action="/quote" method="post">
             <div class="form-group">
                 <input autocomplete="off" autofocus class="form-control" name="symbol" placeholder="Symbol" type="text">
