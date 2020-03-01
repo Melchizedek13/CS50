@@ -1,28 +1,37 @@
-from config import *
-import logger
 from telethon import TelegramClient, connection, events
 
+import logger
+from config import *
 
 logger = logger.get_logger()
 
 # Initialize bot
-bot = TelegramClient('bot', TG_API_ID, TG_API_HASH,
+bot = TelegramClient('db/bot', TG_API_ID, TG_API_HASH,
                      connection=connection.ConnectionTcpMTProxyRandomizedIntermediate,
                      proxy=(MTPROXY_URL, MTPROXY_PORT, MTPROXY_SECRET)
                      ).start(bot_token=TG_BOT_TOKEN)
 
+# print(bot.session.filename)
+
 
 @bot.on(events.NewMessage(pattern='/start'))
 async def send_welcome(event):
-    await event.reply('Howdy, how are you doing?')
+    sender = await event.get_sender()
+    logger.info(sender)
+
+    await event.respond(f'Hi, {sender.first_name}!')
+    raise events.StopPropagation
 
 
 @bot.on(events.NewMessage)
 async def echo_all(event):
-    me = await event.get_user()
-    print(me.username)
-    await event.reply(event.text)
+    await event.reply('**I do not know such a command!**')
+
+
+def main():
+    """Start the bot."""
+    bot.run_until_disconnected()
 
 
 if __name__ == '__main__':
-    bot.run_until_disconnected()
+    main()
