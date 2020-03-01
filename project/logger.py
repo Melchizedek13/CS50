@@ -1,7 +1,7 @@
 import logging
 import sys
 
-LOGGING_LEVEL = logging.DEBUG
+LOGGING_LEVEL = logging.INFO
 LOGGING_FORMAT = '%(asctime)s: %(levelname)s: %(message)s'
 
 
