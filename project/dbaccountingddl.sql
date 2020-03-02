@@ -1,4 +1,4 @@
-/* Thanks to Alexey https://github.com/alexey-goloburdin/telegram-finance-bot/blob/master/createdb.sql */
+/* Thanks to Alexey for a great example - https://github.com/alexey-goloburdin/telegram-finance-bot/blob/master/createdb.sql */
 
 create table budget(
     codename    text primary key,
