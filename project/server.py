@@ -1,12 +1,13 @@
 from telethon import TelegramClient, connection, events
 
 import logger
+import os
 from config import *
 
 logger = logger.get_logger()
 
 # Initialize bot
-bot = TelegramClient('db/bot', TG_API_ID, TG_API_HASH,
+bot = TelegramClient(os.path.join('db', DB_NAME), TG_API_ID, TG_API_HASH,
                      connection=connection.ConnectionTcpMTProxyRandomizedIntermediate,
                      proxy=(MTPROXY_URL, MTPROXY_PORT, MTPROXY_SECRET)
                      ).start(bot_token=TG_BOT_TOKEN)
