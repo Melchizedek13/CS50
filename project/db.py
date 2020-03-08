@@ -1,9 +1,8 @@
 import os
 import sqlite3
 from typing import Dict, List, Tuple
-from config import DB_NAME
 
-conn = sqlite3.connect(os.path.join('db', f'{DB_NAME}.session'))
+conn = sqlite3.connect(os.path.join('db', 'expenses.db'))
 cursor = conn.cursor()
 
 
